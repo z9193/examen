@@ -67,11 +67,9 @@
       <button class="stencil w-full bg-[#e10600] py-3 text-3xl tracking-wide text-white disabled:opacity-60" disabled={loading}>
         {loading ? '...' : tab === 'login' ? 'ENTRAR' : 'REGISTRAR'}
       </button>
+      <p class="mt-6 text-center text-sm text-[#f3ead8]">
+        Desarrollado por <span class="font-semibold">Alejandra Valenzuela</span> y <span class="font-semibold">Stephanie Esparza</span>
+      </p>
     </div>
   </form>
-
-  <!-- Créditos / Integrantes -->
-  <div class="absolute bottom-4 left-0 right-0 z-40 text-center text-[10px] uppercase tracking-[0.25em] text-[#f3ead8]/50">
-    Desarrollado por: <span class="text-[#f3ead8]">Alejandra Valenzuela</span> & <span class="text-[#f3ead8]">Stephanie Esparza</span>
-  </div>
 </div>
