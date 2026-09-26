@@ -5,7 +5,7 @@ create table if not exists usuarios (
   nombre text not null,
   email text unique not null,
   password_hash text not null,
-  rol text not null default 'vendedor' check (rol in ('admin', 'vendedor')),
+  rol text not null default 'vendedor' check (rol in ('admin', 'vendedor', 'cliente')),
   created_at timestamptz not null default now()
 );
 
@@ -50,9 +50,33 @@ create table if not exists venta_detalle (
   precio_unitario numeric(12,2) not null
 );
 
+create table if not exists carros (
+  id uuid primary key default gen_random_uuid(),
+  marca text not null,
+  modelo text not null,
+  anio int
+);
+
+create table if not exists piezas (
+  id uuid primary key default gen_random_uuid(),
+  nombre text not null,
+  precio numeric(12,2) not null default 0,
+  stock int not null default 0 check (stock >= 0),
+  carro_id uuid references carros(id) on delete set null
+);
+
 alter table usuarios enable row level security;
 alter table categorias enable row level security;
 alter table productos enable row level security;
 alter table clientes enable row level security;
 alter table ventas enable row level security;
 alter table venta_detalle enable row level security;
+alter table carros enable row level security;
+alter table piezas enable row level security;
+
+alter table usuarios drop constraint if exists usuarios_rol_check;
+alter table usuarios add constraint usuarios_rol_check check (rol in ('admin', 'vendedor', 'cliente'));
+
+insert into usuarios (nombre, email, password_hash, rol)
+values ('Admin', 'admin@refaccionaria.com', crypt('admin123', gen_salt('bf')), 'admin')
+on conflict (email) do update set password_hash = excluded.password_hash, rol = 'admin';

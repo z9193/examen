@@ -4,25 +4,75 @@
   let { token, user, onout } = $props();
   let categorias = $state([]);
   let productos = $state([]);
+  let carros = $state([]);
+  let piezas = $state([]);
   let err = $state('');
   let i = $state(0);
+  let carroForm = $state({ marca: '', modelo: '', anio: '' });
+  let piezaForm = $state({ nombre: '', precio: '', stock: '', carro_id: '' });
   const rolUi = $derived(user.rol === 'admin' ? 'admin' : 'cliente');
 
-  $effect(() => {
-    Promise.all([
+  async function load() {
+    const [c, p, cars, parts] = await Promise.all([
       api('/categorias', token).then((r) => r.json()),
       api('/productos', token).then((r) => r.json()),
-    ])
-      .then(([c, p]) => {
-        if (!Array.isArray(c)) throw new Error(c.error || 'Categorías');
-        if (!Array.isArray(p)) throw new Error(p.error || 'Productos');
-        categorias = c;
-        productos = p;
-      })
-      .catch((e) => {
-        err = e.message;
-      });
+      api('/carros', token).then((r) => r.json()),
+      api('/piezas', token).then((r) => r.json()),
+    ]);
+    if (!Array.isArray(c)) throw new Error(c.error || 'Categorías');
+    if (!Array.isArray(p)) throw new Error(p.error || 'Productos');
+    if (!Array.isArray(cars)) throw new Error(cars.error || 'Carros');
+    if (!Array.isArray(parts)) throw new Error(parts.error || 'Piezas');
+    categorias = c;
+    productos = p;
+    carros = cars;
+    piezas = parts;
+  }
+
+  $effect(() => {
+    load().catch((e) => {
+      err = e.message;
+    });
   });
+
+  async function crearCarro(e) {
+    e.preventDefault();
+    if (user.rol !== 'admin') return;
+    err = '';
+    const res = await api('/carros', token, {
+      method: 'POST',
+      body: JSON.stringify({ ...carroForm, anio: Number(carroForm.anio) || null }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      err = data.error || 'Error';
+      return;
+    }
+    carroForm = { marca: '', modelo: '', anio: '' };
+    await load();
+  }
+
+  async function crearPieza(e) {
+    e.preventDefault();
+    if (user.rol !== 'admin') return;
+    err = '';
+    const res = await api('/piezas', token, {
+      method: 'POST',
+      body: JSON.stringify({
+        nombre: piezaForm.nombre,
+        precio: Number(piezaForm.precio) || 0,
+        stock: Number(piezaForm.stock) || 0,
+        carro_id: piezaForm.carro_id || null,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      err = data.error || 'Error';
+      return;
+    }
+    piezaForm = { nombre: '', precio: '', stock: '', carro_id: '' };
+    await load();
+  }
 
   const catName = (id) => categorias.find((c) => c.id === id)?.nombre || '';
 
@@ -49,6 +99,48 @@
   {#if err}
     <p class="px-4 pt-20 text-[#e10600]">{err}</p>
   {:else}
+    <div class="grid grid-cols-2 gap-8 px-5 pt-20">
+    <section class="px-5 py-10">
+      <h2 class="stencil mb-5 text-5xl tracking-wide text-[#e10600]">Carros</h2>
+      {#if user.rol === 'admin'}
+        <form class="mb-4 flex flex-wrap gap-2" onsubmit={crearCarro}>
+          <input class="border bg-black px-2 py-1" placeholder="Marca" bind:value={carroForm.marca} required />
+          <input class="border bg-black px-2 py-1" placeholder="Modelo" bind:value={carroForm.modelo} required />
+          <input class="border bg-black px-2 py-1" placeholder="Año" type="number" bind:value={carroForm.anio} />
+          <button class="bg-[#e10600] px-3 py-1 text-white">Crear</button>
+        </form>
+      {/if}
+      <ul>
+        {#each carros as c}
+          <li>{c.marca} {c.modelo} {c.anio || ''}</li>
+        {/each}
+      </ul>
+    </section>
+
+    <section class="px-5 py-10">
+      <h2 class="stencil mb-5 text-5xl tracking-wide text-[#e10600]">Piezas</h2>
+      {#if user.rol === 'admin'}
+        <form class="mb-4 flex flex-wrap gap-2" onsubmit={crearPieza}>
+          <input class="border bg-black px-2 py-1" placeholder="Nombre" bind:value={piezaForm.nombre} required />
+          <input class="border bg-black px-2 py-1" placeholder="Precio" type="number" bind:value={piezaForm.precio} />
+          <input class="border bg-black px-2 py-1" placeholder="Stock" type="number" bind:value={piezaForm.stock} />
+          <select class="border bg-black px-2 py-1" bind:value={piezaForm.carro_id}>
+            <option value="">Carro</option>
+            {#each carros as c}
+              <option value={c.id}>{c.marca} {c.modelo}</option>
+            {/each}
+          </select>
+          <button class="bg-[#e10600] px-3 py-1 text-white">Crear</button>
+        </form>
+      {/if}
+      <ul>
+        {#each piezas as p}
+          <li>{p.nombre} ${Number(p.precio).toFixed(2)} stock {p.stock}</li>
+        {/each}
+      </ul>
+    </section>
+    </div>
+
     <section class="relative h-[78vh] min-h-[520px] overflow-hidden bg-black">
       <div class="pointer-events-none absolute inset-0 select-none">
         <p class="stencil absolute left-1/2 top-[-6%] w-full -translate-x-1/2 text-center text-[26vw] leading-[0.72] text-[#f3ead8]">TURBO</p>

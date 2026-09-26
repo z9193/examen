@@ -47,3 +47,5 @@ export const productos = crud('productos', [
   'stock',
 ]);
 export const clientes = crud('clientes', ['nombre', 'telefono', 'email']);
+export const carros = crud('carros', ['marca', 'modelo', 'anio']);
+export const piezas = crud('piezas', ['nombre', 'precio', 'stock', 'carro_id']);
