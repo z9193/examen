@@ -70,3 +70,9 @@
     </div>
   </form>
 </div>
+
+<!-- Créditos / Integrantes -->
+  <div class="absolute bottom-4 left-0 right-0 z-40 text-center text-[10px] uppercase tracking-[0.25em] text-[#f3ead8]/50">
+    Desarrollado por: <span class="text-[#f3ead8]">Alejandra Valenzuela</span> & <span class="text-[#f3ead8]">Stephanie Esparza</span>
+  </div>
+</div>
